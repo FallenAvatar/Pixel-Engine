@@ -71,6 +71,17 @@ namespace PixelEngine {
 			}
 		}
 
+		private float currFps;
+		public float FPS {
+			get { return currFps; }
+			protected set {
+				currFps = value;
+				if( Handle != IntPtr.Zero ) {
+					SetWindowText( Handle, AppName+" - "+currFps.ToString()+" fps" );
+				}
+			}
+		}
+
 		/// <summary> Thread hosting the game loop </summary>
 		private Thread gameLoop;
 
@@ -193,6 +204,8 @@ namespace PixelEngine {
 			SetTimer(Handle, TimerOne, 10, timerProc);
 			
 			while (active) {
+				var fpsDisplayDelay = 0.1f;
+				var fpsTilDisplay = fpsDisplayDelay;
 				while (active) {
 					
 					if (frameTimer != null && !frameTimer.Tick()) {
@@ -224,6 +237,11 @@ namespace PixelEngine {
 
 					canvas.Draw(defDrawTarget, textTarget);
 
+					fpsTilDisplay -= delta;
+					if( fpsTilDisplay <= 0f ) {
+						FPS = (1000f / delta);
+						fpsTilDisplay = fpsDisplayDelay;
+					}
 				}
 
 				OnDestroy();
