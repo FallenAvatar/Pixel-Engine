@@ -585,7 +585,7 @@ namespace PixelEngine {
 			int width = winRect.Right - winRect.Left;
 			int height = winRect.Bottom - winRect.Top;
 
-			if (!string.IsNullOrWhiteSpace(AppName)) { AppName = GetType().Name; }
+			if (string.IsNullOrWhiteSpace(AppName)) { AppName = GetType().Name; }
 
 			WindowStyles winStyle = WindowStyles.Overlapped | WindowStyles.Visible | WindowStyles.Caption | WindowStyles.SysMenu | WindowStyles.MinimizeBox;
 			Handle = CreateWindowEx(0, ClassName, AppName, (uint)winStyle,
