@@ -239,7 +239,7 @@ namespace PixelEngine {
 
 					fpsTilDisplay -= delta;
 					if( fpsTilDisplay <= 0f ) {
-						FPS = (1000f / delta);
+						FPS = (1f / delta);
 						fpsTilDisplay = fpsDisplayDelay;
 					}
 				}

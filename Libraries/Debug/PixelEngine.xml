@@ -160,6 +160,11 @@
         <member name="M:PixelEngine.Examples.Invaders.RenderInvaderPoses(System.Int32,PixelEngine.Examples.Invaders.InvaderRenderSettings)">
             <summary> Create an invader from a <paramref name="seed"/>, rendering a set of sprites for all of its 'poses' </summary>
         </member>
+        <member name="M:PixelEngine.Examples.Invaders.RenderShot(System.Int32)">
+            <summary> Render a 'shot' sprite using rotational symmetry. </summary>
+            <param name="seed"></param>
+            <returns></returns>
+        </member>
         <member name="T:PixelEngine.Examples.Matrix">
             <summary> Example that lets you see the code, circa 1999. </summary>
         </member>
@@ -4945,9 +4950,27 @@
         <member name="P:PixelEngine.Randoms.Seed">
             <summary> Change the random seed. </summary>
         </member>
+        <member name="P:PixelEngine.Randoms.value">
+            <summary> Quick access to an evenly distributed random float value in range [0, 1) </summary>
+        </member>
+        <member name="P:PixelEngine.Randoms.normal">
+            <summary> Quick access to normally distributed random float value in range [0, 1) </summary>
+        </member>
         <member name="M:PixelEngine.Randoms.RandomByte">
             <summary> Get a single random value between [0, 255] </summary>
             <returns> Single number between 0 and 255 </returns>
+        </member>
+        <member name="M:PixelEngine.Randoms.Range(System.Single,System.Single)">
+            <summary> Generate a random number inside the given range </summary>
+            <param name="min"> Minimum value (inclusive) </param>
+            <param name="max"> Maximum value (exclusive) </param>
+            <returns> Random float between [<paramref name="min"/>, <paramref name="max"/>) </returns>
+        </member>
+        <member name="M:PixelEngine.Randoms.Range(System.Int32,System.Int32)">
+            <summary> Generate a random number inside the given range </summary>
+            <param name="min"> Minimum value (inclusive) </param>
+            <param name="max"> Maximum value (exclusive) </param>
+            <returns> Random float between [<paramref name="min"/>, <paramref name="max"/>) </returns>
         </member>
         <member name="M:PixelEngine.Randoms.RandomBytes(System.Int32)">
             <summary> Get some number of random byte values </summary>
