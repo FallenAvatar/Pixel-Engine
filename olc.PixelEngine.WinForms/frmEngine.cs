@@ -11,22 +11,40 @@ using System.Windows.Forms;
 
 namespace olc.PixelEngine.WinForms {
 	public partial class frmEngine : Form {
-		BufferedGraphicsContext buffContext;
-		public BufferedGraphics buffGraphics;
-		ManualResetEvent loading;
-		Renderer renderer;
+		private BufferedGraphics buffGraphics;
+		public Graphics BufferedGraphics {
+			get {
+				if( buffGraphics == null )
+					return null;
 
-		public frmEngine(Renderer r, ManualResetEvent m) {
-			renderer = r;
-			loading = m;
+				return buffGraphics.Graphics;
+			}
+		}
+
+		public frmEngine() {
 			InitializeComponent();
 
 			SetStyle( ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint, true );
 			UpdateStyles();
 
-			buffContext = BufferedGraphicsManager.Current;
-			buffContext.MaximumBuffer = Size + new Size( 1, 1 );
-			buffGraphics = buffContext.Allocate( CreateGraphics(), DisplayRectangle );
+			CreateBufferedGraphics();
+		}
+
+		private void CreateBufferedGraphics() {
+			if( buffGraphics != null ) {
+				buffGraphics.Dispose();
+				buffGraphics = null;
+			}
+
+			BufferedGraphicsManager.Current.MaximumBuffer = Size + new Size( 1, 1 );
+			buffGraphics = BufferedGraphicsManager.Current.Allocate( CreateGraphics(), DisplayRectangle );
+
+			buffGraphics.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.None;
+			buffGraphics.Graphics.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
+			buffGraphics.Graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighSpeed;
+			buffGraphics.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+			buffGraphics.Graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.None;
+
 			buffGraphics.Graphics.Clear( Color.Black );
 		}
 
@@ -37,39 +55,31 @@ namespace olc.PixelEngine.WinForms {
 		protected override void Dispose( bool disposing ) {
 			if( disposing && (components != null) ) {
 				components.Dispose();
-				buffGraphics.Dispose();
-				buffGraphics = null;
+				if( buffGraphics != null ) {
+					buffGraphics.Dispose();
+					buffGraphics = null;
+				}
 			}
+
 			base.Dispose( disposing );
 		}
 
 		private void frmEngine_Paint( object sender, PaintEventArgs e ) {
-			buffGraphics.Render( e.Graphics );
+			try {
+				buffGraphics.Render( e.Graphics );
+			} catch( Exception _ ) { }
 		}
 
 		private void frmEngine_ResizeEnd( object sender, EventArgs e ) {
-			if( buffGraphics != null ) {
-				buffGraphics.Dispose();
-				buffGraphics = null;
-			}
-
-			buffContext.MaximumBuffer = Size + new Size( 1, 1 );
-			buffGraphics = buffContext.Allocate( CreateGraphics(), DisplayRectangle );
-			buffGraphics.Graphics.Clear( Color.Black );
-
-			Refresh();
+			CreateBufferedGraphics();
 		}
 
 		private void frmEngine_KeyDown( object sender, KeyEventArgs e ) {
-			var k = e.KeyCode;
+			//var k = e.KeyCode;
 		}
 
 		private void frmEngine_KeyUp( object sender, KeyEventArgs e ) {
-			var k = e.KeyCode;
-		}
-
-		private void frmEngine_FormClosing( object sender, FormClosingEventArgs e ) {
-			renderer.Closing();
+			//var k = e.KeyCode;
 		}
 
 		private void frmEngine_MouseDown( object sender, MouseEventArgs e ) {
@@ -84,10 +94,6 @@ namespace olc.PixelEngine.WinForms {
 			//var x = e.X;
 			//var y = e.Y;
 			//var ms = e.Delta;
-		}
-
-		private void frmEngine_Load( object sender, EventArgs e ) {
-			loading.Set();
 		}
 	}
 }

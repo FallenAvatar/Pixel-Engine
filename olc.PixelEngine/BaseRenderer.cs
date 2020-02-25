@@ -10,14 +10,14 @@ namespace olc {
 		public abstract string AppName { get; set; }
 		public abstract float FPS { set; }
 		public abstract bool Running { get; protected set; }
-		public Pixel.Mode PixelMode { get; set; }
-
-		public Pixel DefaultPixel { get { return Pixel.White; } }
+		public PixelMode PixelMode { get; set; }
+		public Size PixelSize { get; protected set; }
 
 		protected BaseRenderer() { }
 
-		public abstract bool ConstructWindow( uint w, uint h );
-		public abstract void SwapBuffers();
+		public abstract bool ConstructWindow( int w, int h, int pixel_w, int pixel_h );
+		public abstract void StartFrame();
+		public abstract void UpdateScreen();
 
 		public abstract void Draw( Point pos, Pixel p );
 
@@ -39,7 +39,7 @@ namespace olc {
 					var t = y1; y1 = y2; y2 = t;
 				}
 				for( y = y1; y <= y2; y++ )
-					if( rol() > 0 ) Draw( new Point(x1, y), p );
+					if( rol() > 0 ) Draw( new Point( x1, y ), p );
 				return;
 			}
 
@@ -49,7 +49,7 @@ namespace olc {
 					var t = x1; x1 = x2; x2 = t;
 				}
 				for( x = x1; x <= x2; x++ )
-					if( rol() > 0 ) Draw( new Point(x, y1), p );
+					if( rol() > 0 ) Draw( new Point( x, y1 ), p );
 				return;
 			}
 
@@ -63,7 +63,7 @@ namespace olc {
 					x = x2; y = y2; xe = x1;
 				}
 
-				if( rol() > 0 ) Draw( new Point(x, y), p );
+				if( rol() > 0 ) Draw( new Point( x, y ), p );
 
 				for( i = 0; x < xe; i++ ) {
 					x = x + 1;
@@ -73,7 +73,7 @@ namespace olc {
 						if( (dx < 0 && dy < 0) || (dx > 0 && dy > 0) ) y = y + 1; else y = y - 1;
 						px = px + 2 * (dy1 - dx1);
 					}
-					if( rol() > 0 ) Draw( new Point(x, y), p );
+					if( rol() > 0 ) Draw( new Point( x, y ), p );
 				}
 			} else {
 				if( dy >= 0 ) {
@@ -82,7 +82,7 @@ namespace olc {
 					x = x2; y = y2; ye = y1;
 				}
 
-				if( rol() > 0 ) Draw( new Point(x, y), p );
+				if( rol() > 0 ) Draw( new Point( x, y ), p );
 
 				for( i = 0; y < ye; i++ ) {
 					y = y + 1;
@@ -92,7 +92,7 @@ namespace olc {
 						if( (dx < 0 && dy < 0) || (dx > 0 && dy > 0) ) x = x + 1; else x = x - 1;
 						py = py + 2 * (dx1 - dy1);
 					}
-					if( rol() > 0 ) Draw( new Point(x, y), p );
+					if( rol() > 0 ) Draw( new Point( x, y ), p );
 				}
 			}
 		}
@@ -107,14 +107,14 @@ namespace olc {
 
 			while( y0 >= x0 ) // only formulate 1/8 of circle
 			{
-				if( 0 < (mask & 0x01) ) Draw( new Point(x + x0, y - y0), p );
-				if( 0 < (mask & 0x02) ) Draw( new Point( x + y0, y - x0), p );
-				if( 0 < (mask & 0x04) ) Draw( new Point( x + y0, y + x0), p );
-				if( 0 < (mask & 0x08) ) Draw( new Point( x + x0, y + y0), p );
-				if( 0 < (mask & 0x10) ) Draw( new Point( x - x0, y + y0), p );
-				if( 0 < (mask & 0x20) ) Draw( new Point( x - y0, y + x0), p );
-				if( 0 < (mask & 0x40) ) Draw( new Point( x - y0, y - x0), p );
-				if( 0 < (mask & 0x80) ) Draw( new Point( x - x0, y - y0), p );
+				if( 0 < (mask & 0x01) ) Draw( new Point( x + x0, y - y0 ), p );
+				if( 0 < (mask & 0x02) ) Draw( new Point( x + y0, y - x0 ), p );
+				if( 0 < (mask & 0x04) ) Draw( new Point( x + y0, y + x0 ), p );
+				if( 0 < (mask & 0x08) ) Draw( new Point( x + x0, y + y0 ), p );
+				if( 0 < (mask & 0x10) ) Draw( new Point( x - x0, y + y0 ), p );
+				if( 0 < (mask & 0x20) ) Draw( new Point( x - y0, y + x0 ), p );
+				if( 0 < (mask & 0x40) ) Draw( new Point( x - y0, y - x0 ), p );
+				if( 0 < (mask & 0x80) ) Draw( new Point( x - x0, y - y0 ), p );
 				if( d < 0 ) d += 4 * x0++ + 6;
 				else d += 4 * (x0++ - y0--) + 10;
 			}
@@ -131,7 +131,7 @@ namespace olc {
 
 			Action<int, int, int> drawline = ( int sx, int ex, int ny ) => {
 				for( int i = sx; i <= ex; i++ )
-					Draw( new Point(i, ny), p );
+					Draw( new Point( i, ny ), p );
 			};
 
 			while( y0 >= x0 ) {
@@ -146,18 +146,21 @@ namespace olc {
 		}
 
 		// Draws a rectangle at (x,y) to (x+w,y+h)
-		public void DrawRect( Point pos, Size size, Pixel p ) {
-			var sizeX = new Size( size.Width, 0 );
-			var sizeY = new Size( 0, size.Height );
-			DrawLine( pos,pos + sizeX, p );
-			DrawLine( pos + sizeX, pos + size, p );
-			DrawLine( pos + size, pos + sizeY, p );
-			DrawLine( pos + sizeY, pos, p );
+		public void DrawRect( Rectangle rect, Pixel p ) {
+			var tl = rect.Location;
+			var tr = rect.Location + new Size( rect.Width, 0 );
+			var br = rect.Location + rect.Size;
+			var bl = rect.Location + new Size( 0, rect.Height );
+			
+			DrawLine( tl, tr, p );
+			DrawLine( tr, br, p );
+			DrawLine( br, bl, p );
+			DrawLine( bl, tl, p );
 		}
 
 		// Fills a rectangle at (x,y) to (x+w,y+h)
-		public void FillRect( Point pos, Size size, Pixel p ) {
-			int x = pos.X, y = pos.Y, w = size.Width, h = size.Height;
+		public void FillRect( Rectangle rect, Pixel p ) {
+			int x = rect.X, y = rect.Y, w = rect.Width, h = rect.Height;
 			var x2 = x + w;
 			var y2 = y + h;
 
@@ -173,7 +176,7 @@ namespace olc {
 
 			for( int i = x; i < x2; i++ )
 				for( int j = y; j < y2; j++ )
-					Draw( new Point(i, j), p );
+					Draw( new Point( i, j ), p );
 		}
 
 		// Draws a triangle between points (x1,y1), (x2,y2) and (x3,y3)
@@ -185,7 +188,7 @@ namespace olc {
 
 		// Flat fills a triangle between points (x1,y1), (x2,y2) and (x3,y3)
 		public void FillTriangle( Point pos1, Point pos2, Point pos3, Pixel p ) {
-			Action<int,int,int> drawline = ( sx, ex, ny ) => { for( int i = sx; i <= ex; i++ ) Draw( new Point(i, ny), p ); };
+			Action<int, int, int> drawline = ( sx, ex, ny ) => { for( int i = sx; i <= ex; i++ ) Draw( new Point( i, ny ), p ); };
 			int x1 = pos1.X, y1 = pos1.Y, x2 = pos2.X, y2 = pos2.Y, x3 = pos3.X, y3 = pos3.Y;
 
 			int t1x, t2x, y, minx, maxx, t1xp, t2xp;
@@ -209,11 +212,13 @@ namespace olc {
 
 			t1x = t2x = x1; y = y1;   // Starting points
 			dx1 = (x2 - x1);
-			if( dx1 < 0 ) { dx1 = -dx1; signx1 = -1; } else signx1 = 1;
+			if( dx1 < 0 ) { dx1 = -dx1; signx1 = -1; }
+			else signx1 = 1;
 			dy1 = (y2 - y1);
 
 			dx2 = (x3 - x1);
-			if( dx2 < 0 ) { dx2 = -dx2; signx2 = -1; } else signx2 = 1;
+			if( dx2 < 0 ) { dx2 = -dx2; signx2 = -1; }
+			else signx2 = 1;
 			dy2 = (y3 - y1);
 
 			if( dy1 > dx1 ) {   // swap values
@@ -225,14 +230,15 @@ namespace olc {
 				changed2 = true;
 			}
 
-			e2 = (int)(dx2 >> 1);
+			e2 = dx2 >> 1;
 			// Flat top, just process the second half
 			if( y1 == y2 ) goto next;
-			e1 = (int)(dx1 >> 1);
+			e1 = dx1 >> 1;
 
 			for( int i = 0; i < dx1; ) {
 				t1xp = 0; t2xp = 0;
-				if( t1x < t2x ) { minx = t1x; maxx = t2x; } else { minx = t2x; maxx = t1x; }
+				if( t1x < t2x ) { minx = t1x; maxx = t2x; }
+				else { minx = t2x; maxx = t1x; }
 				// process first line until y value is about to change
 				while( i < dx1 ) {
 					i++;
@@ -275,8 +281,10 @@ namespace olc {
 			}
 		next:
 			// Second half
-			dx1 = (int)(x3 - x2); if( dx1 < 0 ) { dx1 = -dx1; signx1 = -1; } else signx1 = 1;
-			dy1 = (int)(y3 - y2);
+			dx1 = x3 - x2;
+			if( dx1 < 0 ) { dx1 = -dx1; signx1 = -1; }
+			else signx1 = 1;
+			dy1 = y3 - y2;
 			t1x = x2;
 
 			if( dy1 > dx1 ) {   // swap values
@@ -284,11 +292,12 @@ namespace olc {
 				changed1 = true;
 			} else changed1 = false;
 
-			e1 = (int)(dx1 >> 1);
+			e1 = dx1 >> 1;
 
 			for( int i = 0; i <= dx1; i++ ) {
 				t1xp = 0; t2xp = 0;
-				if( t1x < t2x ) { minx = t1x; maxx = t2x; } else { minx = t2x; maxx = t1x; }
+				if( t1x < t2x ) { minx = t1x; maxx = t2x; }
+				else { minx = t2x; maxx = t1x; }
 				// process first line until y value is about to change
 				while( i < dx1 ) {
 					e1 += dy1;
@@ -337,13 +346,13 @@ namespace olc {
 			if( scale > 1 ) {
 				for( var i = 0; i < sprite.Width; i++ )
 					for( var j = 0; j < sprite.Height; j++ )
-						for( var k = 0; k < scale; k ++)
+						for( var k = 0; k < scale; k++ )
 							for( var l = 0; l < scale; l++ )
-								Draw( new Point(pos.X + (i * scale) + k, pos.Y + (j * scale) + l), sprite[ i, j ] );
+								Draw( new Point( pos.X + (i * scale) + k, pos.Y + (j * scale) + l ), sprite[i, j] );
 			} else {
 				for( var i = 0; i < sprite.Width; i++ )
 					for( var j = 0; j < sprite.Height; j++ )
-						Draw( new Point(pos.X + i, pos.Y + j), sprite[ i, j ] );
+						Draw( new Point( pos.X + i, pos.Y + j ), sprite[i, j] );
 			}
 		}
 
@@ -356,13 +365,13 @@ namespace olc {
 			if( scale > 1 ) {
 				for( var i = 0; i < size.Width; i++ )
 					for( var j = 0; j < size.Height; j++ )
-						for( var k = 0; k < scale; k ++)
+						for( var k = 0; k < scale; k++ )
 							for( var l = 0; l < scale; l++ )
-								Draw( new Point(pos.X + (i * scale) + k, pos.Y + (j * scale) + l), sprite[ i + src.X, j + src.Y ] );
+								Draw( new Point( pos.X + (i * scale) + k, pos.Y + (j * scale) + l ), sprite[i + src.X, j + src.Y] );
 			} else {
 				for( var i = 0; i < size.Width; i++ )
 					for( var j = 0; j < size.Height; j++ )
-						Draw( new Point(pos.X + i, pos.Y + j), sprite[ i + src.X, j + src.Y ] );
+						Draw( new Point( pos.X + i, pos.Y + j ), sprite[i + src.X, j + src.Y] );
 			}
 		}
 
@@ -374,8 +383,8 @@ namespace olc {
 			var sx = 0;
 			var sy = 0;
 			var savedPM = PixelMode;
-			if( col.A != 255 ) PixelMode = Pixel.Mode.Alpha;
-			else PixelMode = Pixel.Mode.Mask;
+			if( col.A != 255 ) PixelMode = PixelMode.Alpha;
+			else PixelMode = PixelMode.Mask;
 
 			foreach( var c in sText ) {
 				if( c == '\n' ) {
@@ -387,15 +396,15 @@ namespace olc {
 					if( scale > 1 ) {
 						for( var i = 0; i < 8; i++ )
 							for( var j = 0; j < 8; j++ )
-								if( fontSprite[ i + ox * 8, j + oy * 8 ].R > 0 )
-									for( var k = 0; k < scale; k ++)
+								if( fontSprite[i + ox * 8, j + oy * 8].R > 0 )
+									for( var k = 0; k < scale; k++ )
 										for( var l = 0; l < scale; l++ )
-											Draw( new Point(x + sx + (i * scale) + k, y + sy + (j * scale) + l), col );
+											Draw( new Point( x + sx + (i * scale) + k, y + sy + (j * scale) + l ), col );
 					} else {
 						for( var i = 0; i < 8; i++ )
 							for( var j = 0; j < 8; j++ )
-								if( fontSprite[ i + ox * 8, j + oy * 8 ].R > 0 )
-									Draw( new Point(x + sx + i, y + sy + j), col );
+								if( fontSprite[i + ox * 8, j + oy * 8].R > 0 )
+									Draw( new Point( x + sx + i, y + sy + j ), col );
 					}
 					sx += (int)(8 * scale);
 				}
@@ -410,7 +419,7 @@ namespace olc {
 
 			for( var x = 0; x < Width; x++ )
 				for( var y = 0; y < Height; y++ )
-					Draw( new Point(x, y), p );
+					Draw( new Point( x, y ), p );
 		}
 	}
 }

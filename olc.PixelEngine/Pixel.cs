@@ -3,22 +3,20 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace olc {
-	[StructLayout( layoutKind: LayoutKind.Explicit, Size = 4 )]
+	public enum PixelMode {
+		Normal,
+		Mask,
+		Alpha,
+		Custom
+	}
 	public class Pixel : IEquatable<Pixel> {
-		public enum Mode {
-			Normal,
-			Mask,
-			Alpha,
-			Custom
-		}
+		public byte A;
+		public byte R;
+		public byte G;
+		public byte B;
 
-		[FieldOffset( 0 )] public byte A;
-		[FieldOffset( 1 )] public byte B;
-		[FieldOffset( 2 )] public byte G;
-		[FieldOffset( 3 )] public byte R;
-
-		public int Value {
-			get { return (A << 24) | (B << 16) | (G << 8) | (R << 0); }
+		/*public uint Value {
+			get { return (uint)((A << 24) | (B << 16) | (G << 8) | (R << 0)); }
 			set {
 				var v = value;
 
@@ -27,21 +25,18 @@ namespace olc {
 				G = (byte)((v & (0xff <<  8)) >>  8);
 				R = (byte)((v & (0xff <<  0)) >>  0);
 			}
-		}
+		}*/
 
 		public Pixel() {
-			A = 0;
+			A = 255;
 			R = 0;
 			G = 0;
 			B = 0;
 		}
 
-		public Pixel(uint val) {
-			A = (byte)((val & (0xff << 24)) >> 24);
-			B = (byte)((val & (0xff << 16)) >> 16);
-			G = (byte)((val & (0xff << 8)) >> 8);
-			R = (byte)((val & (0xff << 0)) >> 0);
-		}
+		/*public Pixel(uint val) {
+			Value = val;
+		}*/
 
 		public Pixel( byte r, byte g, byte b, byte a = 0xff ) {
 			A = a;
@@ -50,8 +45,36 @@ namespace olc {
 			R = r;
 		}
 
+		public int ToArgb() {
+			return (A << 24) | (R << 16) | (G << 8) | (B << 0);
+		}
+
 		public bool Equals( Pixel other ) {
-			return Value == other.Value;
+			return GetHashCode() == other.GetHashCode();
+		}
+
+		public override int GetHashCode() {
+			return (A << 24) | (R << 16) | (G << 8) | (B << 0);
+		}
+
+		public System.Drawing.Color ToColor() {
+			return this;
+		}
+
+		public static implicit operator System.Drawing.Color(Pixel p) {
+			return System.Drawing.Color.FromArgb( p.A, p.R, p.G, p.B );
+		}
+
+		public static Pixel FromColor( System.Drawing.Color c) {
+			return new Pixel( c.R, c.G, c.B, c.A );
+		}
+
+		public static Pixel FromArgb( byte a, byte r, byte g, byte b ) {
+			return new Pixel( r, g, b, a );
+		}
+
+		public static Pixel FromRgb( byte r, byte g, byte b ) {
+			return new Pixel( r, g, b );
 		}
 
 		#region Preset Static Values

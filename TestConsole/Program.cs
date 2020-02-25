@@ -8,19 +8,34 @@ namespace TestConsole {
 	class Program : olc.PixelEngine.WinForms.BasePixelEngine {
 		static void Main( string[] args ) {
 			var demo = new Program(args);
-			if( demo.Construct( 400, 300, 1, 1 ) == olc.ReturnCode.OK )
+			if( demo.Construct( 150, 100, 4, 4 ) == olc.ReturnCode.OK )
 				_ = demo.Start();
 		}
 
-		public Program( string[] args ) : base() { }
+		private Random rand;
+		private olc.Pixel randP;
+
+		public Program( string[] args ) : base() {
+		}
 
 		public override bool OnUserCreate() {
+			rand = new Random();
+			randP = new olc.Pixel();
+
 			return true;
 		}
 		public override bool OnUserUpdate( float fElapsedTime ) {
 			Clear();
 
-			DrawLine( 10, 10, 390, 10, olc.Pixel.Green );
+			for( int i = 0; i < Renderer.Width; i++ ) {
+				for( int j = 0; j < Renderer.Height; j++ ) {
+					
+					randP.R = (byte)rand.Next( 0, 256 );
+					randP.G = (byte)rand.Next( 0, 256 );
+					randP.B = (byte)rand.Next( 0, 256 );
+					Draw( i, j, randP ); // Draw a random pixel
+				}
+			}
 
 			return true;
 		}

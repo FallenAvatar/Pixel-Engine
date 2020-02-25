@@ -77,7 +77,7 @@ namespace olc {
 			Mode = SpriteMode.Normal;
 		}
 
-		public Sprite( System.Drawing.Bitmap img ) {
+		public Sprite( Bitmap img ) {
 			Width = img.Width;
 			Height = img.Height;
 			Pixels = new Pixel[Width, Height];
@@ -86,7 +86,7 @@ namespace olc {
 			for( var x = 0; x < img.Width; x++ ) {
 				for( var y = 0; y < img.Width; y++ ) {
 					var c = img.GetPixel( x, y );
-					Pixels[x, y] = new Pixel( (uint)c.ToArgb() );
+					Pixels[x, y] = Pixel.FromColor(c);
 				}
 			}
 		}

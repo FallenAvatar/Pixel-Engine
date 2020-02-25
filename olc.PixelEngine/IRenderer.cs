@@ -9,9 +9,10 @@ namespace olc {
 		string AppName { get; set; }
 		float FPS { set; }
 		bool Running { get; }
-		Pixel.Mode PixelMode { get; set; }
+		PixelMode PixelMode { get; set; }
+		Size PixelSize { get; }
 
-		bool ConstructWindow( uint w, uint h );
+		bool ConstructWindow( int w, int h, int pixel_w, int pixel_h );
 
 		void Clear( Pixel p );
 
@@ -27,10 +28,10 @@ namespace olc {
 		void FillCircle( Point pos, int radius, Pixel p );
 
 		// Draws a rectangle at (x,y) to (x+w,y+h)
-		void DrawRect( Point pos, Size size, Pixel p );
+		void DrawRect( Rectangle rect, Pixel p );
 
 		// Fills a rectangle at (x,y) to (x+w,y+h)
-		void FillRect( Point pos, Size size, Pixel p );
+		void FillRect( Rectangle rect, Pixel p );
 
 		// Draws a triangle between points (x1,y1), (x2,y2) and (x3,y3)
 		void DrawTriangle( Point pos1, Point pos2, Point pos3, Pixel p );
@@ -48,6 +49,7 @@ namespace olc {
 		// Draws a single line of text
 		void DrawString( Point pos, string sText, Pixel col = null, int scale = 1 );
 
-		void SwapBuffers();
+		void StartFrame();
+		void UpdateScreen();
 	}
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Threading;
@@ -9,6 +10,8 @@ namespace olc.PixelEngine.WinForms {
 		private frmEngine window;
 		private Thread uiThread;
 		public override bool Running { get; protected set; }
+		private Bitmap imgBackBuffer;
+		private System.Drawing.Imaging.BitmapData bd;
 
 		public Renderer() : base() { }
 
@@ -37,13 +40,23 @@ namespace olc.PixelEngine.WinForms {
 			}
 		}
 
-		public override bool ConstructWindow( uint w, uint h ) {
+		public override bool ConstructWindow( int w, int h, int pixel_w, int pixel_h ) {
 			Running = true;
+			Width = w;
+			Height = h;
+			PixelSize = new Size( pixel_w, pixel_h );
+			imgBackBuffer = new Bitmap( w * pixel_w, h * pixel_h, System.Drawing.Imaging.PixelFormat.Format32bppArgb );
 
 			var loading = new ManualResetEvent( false );
 			uiThread = new Thread( () => {
-				window = new frmEngine( this, loading );
-				window.Size = new Size( (int)w, (int)h );
+				window = new frmEngine();
+				window.Load += ( obj, e ) => {
+					_ = loading.Set();
+				};
+				window.FormClosing += ( obj, e ) => {
+					Running = false;
+				};
+				window.ClientSize = new Size( w*pixel_w, h*pixel_h );
 
 				if( !string.IsNullOrWhiteSpace( appName ) )
 					window.Text = appName;
@@ -58,20 +71,34 @@ namespace olc.PixelEngine.WinForms {
 			return true;
 		}
 
-		public override void Draw(Point pos, Pixel p) {
-			window.buffGraphics.Graphics.FillRectangle( new SolidBrush( Color.FromArgb( p.A, p.R, p.G, p.B ) ), pos.X, pos.Y, 1, 1 );
+		public unsafe override void Draw(Point pos, Pixel p) {
+			var s = bd.Stride / 4;
+			//var pixSize = 4;
+			int* pStart = (int*)bd.Scan0.ToPointer();
+			var pixVal = p.ToArgb();
+
+			var sx = pos.X * PixelSize.Width;
+			var sy = pos.Y * PixelSize.Height;
+
+			for( var x = sx; x < sx + PixelSize.Width; x++ )
+				for( var y = sy; y < sy + PixelSize.Height; y++ )
+					*(pStart + (y * s) + (x)) = pixVal;
 		}
 
-		public override void Clear(Pixel p) {
-			window.buffGraphics.Graphics.Clear( Color.FromArgb( p.A, p.R, p.G, p.B ) );
+		public override void StartFrame() {
+			bd = imgBackBuffer.LockBits( new Rectangle( 0, 0, Width * PixelSize.Width, Height * PixelSize.Height ), System.Drawing.Imaging.ImageLockMode.ReadWrite, System.Drawing.Imaging.PixelFormat.Format32bppArgb );
 		}
 
-		public override void SwapBuffers() {
-			Invoke( () => { window.Refresh(); } );
-		}
+		public override void UpdateScreen() {
+			imgBackBuffer.UnlockBits( bd );
+			try {
+				window.BufferedGraphics.DrawImageUnscaled( imgBackBuffer, 0, 0 );
+			} catch( Exception _ ) { }
 
-		public void Closing() {
-			Running = false;
+			Invoke( () => {
+				
+				window.Refresh();
+			} );
 		}
 
 		private void Invoke( Action a ) {

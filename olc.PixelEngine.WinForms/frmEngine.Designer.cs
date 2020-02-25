@@ -23,8 +23,6 @@
 			this.ClientSize = new System.Drawing.Size(800, 450);
 			this.Name = "frmEngine";
 			this.Text = "PixelEngine";
-			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.frmEngine_FormClosing);
-			this.Load += new System.EventHandler(this.frmEngine_Load);
 			this.ResizeEnd += new System.EventHandler(this.frmEngine_ResizeEnd);
 			this.Paint += new System.Windows.Forms.PaintEventHandler(this.frmEngine_Paint);
 			this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.frmEngine_KeyDown);
