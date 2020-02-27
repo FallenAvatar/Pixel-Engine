@@ -11,7 +11,7 @@ namespace olc {
 		public abstract float FPS { set; }
 		public abstract bool Running { get; protected set; }
 		public PixelMode PixelMode { get; set; }
-		public Size PixelSize { get; protected set; }
+		public virtual Size PixelSize { get; protected set; }
 
 		public Sprite RenderTarget { get; set; }
 
@@ -21,7 +21,7 @@ namespace olc {
 			Width = screen_w;
 			Height = screen_h;
 			PixelSize = new Size( pixel_w, pixel_h );
-			RenderTarget = new Sprite( screen_w * pixel_w, screen_h * pixel_h );
+			RenderTarget = new Sprite( screen_w, screen_h );
 
 			var ret = PlatformConstructWindow();
 
@@ -36,16 +36,8 @@ namespace olc {
 		public abstract void StartFrame();
 		public abstract void UpdateScreen();
 
-		protected abstract void DrawRaw( int x, int y, Pixel p );
 		public virtual void Draw( int x, int y, Pixel p ) {
-			var pw = PixelSize.Width;
-			var ph = PixelSize.Height;
-			var sx = x * pw;
-			var sy = y * ph;
-
-			for( var xi = 0; xi < pw; xi++ )
-				for( var yi = 0; yi < ph; yi++ )
-					DrawRaw(sx + xi, sy + yi, p);
+			RenderTarget[x, y] = p;
 		}
 
 		// Draws a line from (x1,y1) to (x2,y2)

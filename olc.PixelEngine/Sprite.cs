@@ -85,7 +85,7 @@ namespace olc {
 			Mode = SpriteMode.Normal;
 
 			for( var x = 0; x < img.Width; x++ ) {
-				for( var y = 0; y < img.Width; y++ ) {
+				for( var y = 0; y < img.Height; y++ ) {
 					var c = img.GetPixel( x, y );
 					this[x, y] = Pixel.FromColor(c);
 				}

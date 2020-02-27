@@ -11,6 +11,12 @@ namespace olc.PixelEngine.WinForms {
 		private Thread uiThread;
 		public override bool Running { get; protected set; }
 
+		protected Size pixSize;
+		public override Size PixelSize {
+			get { return pixSize;  }
+			protected set { pixSize = value; if( window != null ) window.PixelSize = pixSize; }
+		}
+
 		public Renderer() : base() { }
 
 		private string appName;
@@ -86,8 +92,9 @@ namespace olc.PixelEngine.WinForms {
 			var loading = new ManualResetEvent( false );
 			uiThread = new Thread( () => {
 				window = new frmEngine();
+				window.PixelSize = PixelSize;
 				window.Load += ( obj, e ) => {
-					window.Size = new Size( RenderTarget.Width, RenderTarget.Height );
+					window.Size = new Size( Width * PixelSize.Width, Height * PixelSize.Height );
 					_ = loading.Set();
 				};
 				window.FormClosing += ( obj, e ) => {
@@ -107,19 +114,15 @@ namespace olc.PixelEngine.WinForms {
 			return true;
 		}
 
-		protected override void DrawRaw( int x, int y, Pixel p ) {
-			RenderTarget[x, y] = p;
-		}
-
 		public override void StartFrame() {
 			if( window.NeedsNewGraphics )
 				Invoke( () => { window.CreateGraphics(); } );
 		}
 
 		public override void UpdateScreen() {
-			window.SetPixels( RenderTarget.Pixels );
-
 			Invoke( () => {
+				window.SetPixels( RenderTarget.Pixels );
+
 				window.Refresh();
 			} );
 		}

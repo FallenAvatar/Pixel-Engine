@@ -25,11 +25,9 @@ namespace TestConsole.Examples {
 
 			for( int i = 0; i < Renderer.Width; i++ ) {
 				for( int j = 0; j < Renderer.Height; j++ ) {
-					r = rand.Next( 0, 0xffffff+1 );
-					randP.R = (byte)(r & 0xff);
-					randP.G = (byte)((r >> 8) & 0xff);
-					randP.B = (byte)((r >> 16) & 0xff);
-					Draw( i, j, randP ); // Draw a random pixel
+					r = rand.Next() | (0xff << 24);
+					randP.Value = r;
+					Draw( i, j, randP );
 				}
 			}
 

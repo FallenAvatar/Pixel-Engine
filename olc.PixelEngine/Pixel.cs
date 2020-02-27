@@ -16,17 +16,19 @@ namespace olc {
 		[FieldOffset( 1 )] public byte G;
 		[FieldOffset( 0 )] public byte B;
 
-		/*public uint Value {
-			get { return (uint)((A << 24) | (B << 16) | (G << 8) | (R << 0)); }
+		public int Value {
+			get { return ((A << 24) | (B << 16) | (G << 8) | (R << 0)); }
 			set {
 				var v = value;
 
-				A = (byte)((v & (0xff << 24)) >> 24);
-				B = (byte)((v & (0xff << 16)) >> 16);
-				G = (byte)((v & (0xff <<  8)) >>  8);
-				R = (byte)((v & (0xff <<  0)) >>  0);
+				unchecked {
+					A = (byte)((v & (0xff << 24)) >> 24);
+					B = (byte)((v & (0xff << 16)) >> 16);
+					G = (byte)((v & (0xff << 8)) >> 8);
+					R = (byte)((v & (0xff << 0)) >> 0);
+				}
 			}
-		}*/
+		}
 
 		/*public Pixel() {
 			A = 255;

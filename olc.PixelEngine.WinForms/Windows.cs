@@ -143,5 +143,9 @@ namespace olc.PixelEngine.WinForms {
 			/// </summary>
 			CAPTUREBLT = 0x40000000
 		}
+
+		[DllImport( "gdi32.dll", EntryPoint = "StretchBlt", SetLastError = true )]
+		[return: MarshalAs( UnmanagedType.Bool )]
+		internal static extern bool StretchBlt( [In] IntPtr hdc, int xDest, int yDest, int wDest, int hDest, [In] IntPtr hdcSrc, int xSrc, int ySrc, int wSrc, int hSrc, TernaryRasterOperations dwRop );
 	}
 }
