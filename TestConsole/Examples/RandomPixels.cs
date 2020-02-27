@@ -15,7 +15,7 @@ namespace TestConsole.Examples {
 
 		public override bool OnUserCreate() {
 			rand = new Random();
-			randP = new olc.Pixel(0,0,0);
+			randP = new olc.Pixel( 0, 0, 0 );
 
 			return true;
 		}

@@ -78,6 +78,13 @@ namespace olc {
 			Mode = SpriteMode.Normal;
 		}
 
+		public Sprite( Memory<Pixel> pixels, int w, int h ) {
+			Width = w;
+			Height = h;
+			Pixels = pixels;
+			Mode = SpriteMode.Normal;
+		}
+
 		public Sprite( Bitmap img ) {
 			Width = img.Width;
 			Height = img.Height;

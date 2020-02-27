@@ -4,8 +4,8 @@ using System.Drawing;
 
 namespace olc {
 	public abstract class BaseRenderer : IRenderer {
-		public int Width { get; protected set; }
-		public int Height { get; protected set; }
+		public int Width { get { return RenderTarget.Width; } }
+		public int Height { get { return RenderTarget.Height; } }
 
 		public abstract string AppName { get; set; }
 		public abstract float FPS { set; }
@@ -18,18 +18,10 @@ namespace olc {
 		protected BaseRenderer() { }
 
 		public virtual bool ConstructWindow( int screen_w, int screen_h, int pixel_w, int pixel_h ) {
-			Width = screen_w;
-			Height = screen_h;
 			PixelSize = new Size( pixel_w, pixel_h );
 			RenderTarget = new Sprite( screen_w, screen_h );
 
-			var ret = PlatformConstructWindow();
-
-			if( ret ) {
-				Running = true;
-			}
-
-			return ret;
+			return Running = PlatformConstructWindow();
 		}
 
 		protected abstract bool PlatformConstructWindow();
@@ -41,8 +33,7 @@ namespace olc {
 		}
 
 		// Draws a line from (x1,y1) to (x2,y2)
-		public void DrawLine( Point pos1, Point pos2, Pixel p, uint pattern = 0xFFFFFFFF ) {
-			int x1 = pos1.X, y1 = pos1.Y, x2 = pos2.X, y2 = pos2.Y;
+		public virtual void DrawLine( int x1, int y1, int x2, int y2, Pixel p, uint pattern = 0xFFFFFFFF ) {
 			int x, y, dx, dy, dx1, dy1, px, py, xe, ye, i;
 			dx = x2 - x1; dy = y2 - y1;
 
@@ -54,21 +45,23 @@ namespace olc {
 			// straight lines idea by gurkanctn
 			if( dx == 0 ) // Line is vertical
 			{
-				if( y2 < y1 ) {
-					var t = y1; y1 = y2; y2 = t;
-				}
+				if( y2 < y1 )
+					Utils.Swap( ref y1, ref y2 );
+				
 				for( y = y1; y <= y2; y++ )
-					if( rol() > 0 ) Draw( x1, y , p );
-				return;
-			}
+					if( rol() > 0 )
+						Draw( x1, y, p );
 
-			if( dy == 0 ) // Line is horizontal
+				return;
+			} else if( dy == 0 ) // Line is horizontal
 			{
-				if( x2 < x1 ) {
-					var t = x1; x1 = x2; x2 = t;
-				}
+				if( x2 < x1 )
+					Utils.Swap( ref x1, ref x2 );
+				
 				for( x = x1; x <= x2; x++ )
-					if( rol() > 0 ) Draw( x, y1 , p );
+					if( rol() > 0 )
+						Draw( x, y1, p );
+
 				return;
 			}
 
@@ -101,47 +94,56 @@ namespace olc {
 					x = x2; y = y2; ye = y1;
 				}
 
-				if( rol() > 0 ) Draw( x, y, p );
+				if( rol() > 0 )
+					Draw( x, y, p );
 
 				for( i = 0; y < ye; i++ ) {
 					y = y + 1;
 					if( py <= 0 )
-						py = py + 2 * dx1;
+						py += 2 * dx1;
 					else {
-						if( (dx < 0 && dy < 0) || (dx > 0 && dy > 0) ) x = x + 1; else x = x - 1;
-						py = py + 2 * (dx1 - dy1);
+						if( (dx < 0 && dy < 0) || (dx > 0 && dy > 0) )
+							x++;
+						else
+							x--;
+						py += 2 * (dx1 - dy1);
 					}
-					if( rol() > 0 ) Draw( x, y, p );
+
+					if( rol() > 0 )
+						Draw( x, y, p );
 				}
 			}
 		}
 
 		// Draws a circle located at (x,y) with radius
-		public void DrawCircle( Point pos, int radius, Pixel p, byte mask = 0xFF ) {
-			int x = pos.X, y = pos.Y;
+		public virtual void DrawCircle( int x, int y, int radius, Pixel p, byte mask = 0xFF ) {
 			int x0 = 0;
 			int y0 = radius;
 			int d = 3 - 2 * radius;
-			if( radius <= 0 ) return;
+
+			if( radius <= 0 )
+				return;
 
 			while( y0 >= x0 ) // only formulate 1/8 of circle
 			{
-				if( 0 < (mask & 0x01) ) Draw( x + x0, y - y0 , p );
-				if( 0 < (mask & 0x02) ) Draw( x + y0, y - x0 , p );
-				if( 0 < (mask & 0x04) ) Draw( x + y0, y + x0 , p );
-				if( 0 < (mask & 0x08) ) Draw( x + x0, y + y0 , p );
-				if( 0 < (mask & 0x10) ) Draw( x - x0, y + y0 , p );
-				if( 0 < (mask & 0x20) ) Draw( x - y0, y + x0 , p );
-				if( 0 < (mask & 0x40) ) Draw( x - y0, y - x0 , p );
-				if( 0 < (mask & 0x80) ) Draw( x - x0, y - y0 , p );
-				if( d < 0 ) d += 4 * x0++ + 6;
-				else d += 4 * (x0++ - y0--) + 10;
+				if( 0 < (mask & 0x01) ) Draw( x + x0, y - y0, p );
+				if( 0 < (mask & 0x02) ) Draw( x + y0, y - x0, p );
+				if( 0 < (mask & 0x04) ) Draw( x + y0, y + x0, p );
+				if( 0 < (mask & 0x08) ) Draw( x + x0, y + y0, p );
+				if( 0 < (mask & 0x10) ) Draw( x - x0, y + y0, p );
+				if( 0 < (mask & 0x20) ) Draw( x - y0, y + x0, p );
+				if( 0 < (mask & 0x40) ) Draw( x - y0, y - x0, p );
+				if( 0 < (mask & 0x80) ) Draw( x - x0, y - y0, p );
+
+				if( d < 0 )
+					d += 4 * x0++ + 6;
+				else
+					d += 4 * (x0++ - y0--) + 10;
 			}
 		}
 
 		// Fills a circle located at (x,y) with radius
-		public void FillCircle( Point pos, int radius, Pixel p ) {
-			int x = pos.X, y = pos.Y;
+		public virtual void FillCircle( int x, int y, int radius, Pixel p ) {
 			// Taken from wikipedia
 			int x0 = 0;
 			int y0 = radius;
@@ -159,39 +161,29 @@ namespace olc {
 				drawline( x - y0, x + y0, y - x0 );
 				drawline( x - x0, x + x0, y + y0 );
 				drawline( x - y0, x + y0, y + x0 );
-				if( d < 0 ) d += 4 * x0++ + 6;
-				else d += 4 * (x0++ - y0--) + 10;
+
+				if( d < 0 )
+					d += 4 * x0++ + 6;
+				else
+					d += 4 * (x0++ - y0--) + 10;
 			}
 		}
 
 		// Draws a rectangle at (x,y) to (x+w,y+h)
-		public void DrawRect( Rectangle rect, Pixel p ) {
-			var tl = rect.Location;
-			var tr = rect.Location + new Size( rect.Width, 0 );
-			var br = rect.Location + rect.Size;
-			var bl = rect.Location + new Size( 0, rect.Height );
-			
-			DrawLine( tl, tr, p );
-			DrawLine( tr, br, p );
-			DrawLine( br, bl, p );
-			DrawLine( bl, tl, p );
+		public virtual void DrawRect( int x, int y, int w, int h, Pixel p ) {
+			DrawLine( x, y, x + w, y, p );
+			DrawLine( x + w, y, x + w, y + h, p );
+			DrawLine( x + w, y + h, x, y + h, p );
+			DrawLine( x, y + h, x, y, p );
 		}
 
 		// Fills a rectangle at (x,y) to (x+w,y+h)
-		public void FillRect( Rectangle rect, Pixel p ) {
-			int x = rect.X, y = rect.Y, w = rect.Width, h = rect.Height;
-			var x2 = x + w;
-			var y2 = y + h;
+		public virtual void FillRect( int x, int y, int w, int h, Pixel p ) {
+			var x2 = Utils.Clamp(0, x + w, Width);
+			var y2 = Utils.Clamp( 0, y + h, Height);
 
-			if( x < 0 ) x = 0;
-			if( x >= Width ) x = Width;
-			if( y < 0 ) y = 0;
-			if( y >= Height ) y = Height;
-
-			if( x2 < 0 ) x2 = 0;
-			if( x2 >= Width ) x2 = Width;
-			if( y2 < 0 ) y2 = 0;
-			if( y2 >= Height ) y2 = Height;
+			x = Utils.Clamp( 0, x, Width );
+			y = Utils.Clamp( 0, y, Height );
 
 			for( int i = x; i < x2; i++ )
 				for( int j = y; j < y2; j++ )
@@ -199,16 +191,15 @@ namespace olc {
 		}
 
 		// Draws a triangle between points (x1,y1), (x2,y2) and (x3,y3)
-		public void DrawTriangle( Point pos1, Point pos2, Point pos3, Pixel p ) {
-			DrawLine( pos1, pos2, p );
-			DrawLine( pos2, pos3, p );
-			DrawLine( pos3, pos1, p );
+		public virtual void DrawTriangle( int x1, int y1, int x2, int y2, int x3, int y3, Pixel p ) {
+			DrawLine( x1, y1, x2, y2, p );
+			DrawLine( x2, y2, x3, y3, p );
+			DrawLine( x3, y3, x1, y1, p );
 		}
 
 		// Flat fills a triangle between points (x1,y1), (x2,y2) and (x3,y3)
-		public void FillTriangle( Point pos1, Point pos2, Point pos3, Pixel p ) {
+		public virtual void FillTriangle( int x1, int y1, int x2, int y2, int x3, int y3, Pixel p ) {
 			Action<int, int, int> drawline = ( sx, ex, ny ) => { for( int i = sx; i <= ex; i++ ) Draw( i, ny, p ); };
-			int x1 = pos1.X, y1 = pos1.Y, x2 = pos2.X, y2 = pos2.Y, x3 = pos3.X, y3 = pos3.Y;
 
 			int t1x, t2x, y, minx, maxx, t1xp, t2xp;
 			bool changed1 = false;
@@ -217,35 +208,33 @@ namespace olc {
 			int e1, e2;
 			// Sort vertices
 			if( y1 > y2 ) {
-				var t = y1; y1 = y2; y2 = t;
-				t = x1; x1 = x2; x2 = t;
+				Utils.Swap( ref x1, ref x2 );
+				Utils.Swap( ref y1, ref y2 );
 			}
 			if( y1 > y3 ) {
-				var t = y1; y1 = y3; y3 = t;
-				t = x1; x1 = x3; x3 = t;
+				Utils.Swap( ref x1, ref x3 );
+				Utils.Swap( ref y1, ref y3 );
 			}
 			if( y2 > y3 ) {
-				var t = y2; y2 = y3; y3 = t;
-				t = x2; x2 = x3; x3 = t;
+				Utils.Swap( ref x2, ref x3 );
+				Utils.Swap( ref y2, ref y3 );
 			}
 
 			t1x = t2x = x1; y = y1;   // Starting points
 			dx1 = (x2 - x1);
-			if( dx1 < 0 ) { dx1 = -dx1; signx1 = -1; }
-			else signx1 = 1;
+			if( dx1 < 0 ) { dx1 = -dx1; signx1 = -1; } else signx1 = 1;
 			dy1 = (y2 - y1);
 
 			dx2 = (x3 - x1);
-			if( dx2 < 0 ) { dx2 = -dx2; signx2 = -1; }
-			else signx2 = 1;
+			if( dx2 < 0 ) { dx2 = -dx2; signx2 = -1; } else signx2 = 1;
 			dy2 = (y3 - y1);
 
 			if( dy1 > dx1 ) {   // swap values
-				var t = dx1; dx1 = dy1; dy1 = t;
+				Utils.Swap( ref dx1, ref dy1 );
 				changed1 = true;
 			}
 			if( dy2 > dx2 ) {   // swap values
-				var t = dy1; dy1 = dx1; dx1 = t;
+				Utils.Swap( ref dx2, ref dy2 );
 				changed2 = true;
 			}
 
@@ -256,8 +245,7 @@ namespace olc {
 
 			for( int i = 0; i < dx1; ) {
 				t1xp = 0; t2xp = 0;
-				if( t1x < t2x ) { minx = t1x; maxx = t2x; }
-				else { minx = t2x; maxx = t1x; }
+				if( t1x < t2x ) { minx = t1x; maxx = t2x; } else { minx = t2x; maxx = t1x; }
 				// process first line until y value is about to change
 				while( i < dx1 ) {
 					i++;
@@ -301,8 +289,7 @@ namespace olc {
 		next:
 			// Second half
 			dx1 = x3 - x2;
-			if( dx1 < 0 ) { dx1 = -dx1; signx1 = -1; }
-			else signx1 = 1;
+			if( dx1 < 0 ) { dx1 = -dx1; signx1 = -1; } else signx1 = 1;
 			dy1 = y3 - y2;
 			t1x = x2;
 
@@ -315,8 +302,7 @@ namespace olc {
 
 			for( int i = 0; i <= dx1; i++ ) {
 				t1xp = 0; t2xp = 0;
-				if( t1x < t2x ) { minx = t1x; maxx = t2x; }
-				else { minx = t2x; maxx = t1x; }
+				if( t1x < t2x ) { minx = t1x; maxx = t2x; } else { minx = t2x; maxx = t1x; }
 				// process first line until y value is about to change
 				while( i < dx1 ) {
 					e1 += dy1;
@@ -358,7 +344,7 @@ namespace olc {
 		}
 
 		// Draws an entire sprite at location (x,y)
-		public void DrawSprite( Point pos, Sprite sprite, int scale = 1 ) {
+		public virtual void DrawSprite( int x, int y, Sprite sprite, int scale = 1 ) {
 			if( sprite == null )
 				return;
 
@@ -367,47 +353,49 @@ namespace olc {
 					for( var j = 0; j < sprite.Height; j++ )
 						for( var k = 0; k < scale; k++ )
 							for( var l = 0; l < scale; l++ )
-								Draw( pos.X + (i * scale) + k, pos.Y + (j * scale) + l, sprite[i, j] );
+								Draw( x + (i * scale) + k, y + (j * scale) + l, sprite[i, j] );
 			} else {
 				for( var i = 0; i < sprite.Width; i++ )
 					for( var j = 0; j < sprite.Height; j++ )
-						Draw( pos.X + i, pos.Y + j, sprite[i, j] );
+						Draw( x + i, y + j, sprite[i, j] );
 			}
 		}
 
 		// Draws an area of a sprite at location (x,y), where the
 		// selected area is (ox,oy) to (ox+w,oy+h)
-		public void DrawPartialSprite( Point pos, Sprite sprite, Point src, Size size, int scale = 1 ) {
+		public virtual void DrawPartialSprite( int xDest, int yDest, Sprite sprite, int xSrc, int ySrc, int wSrc, int hSrc, int scale = 1 ) {
 			if( sprite == null )
 				return;
 
 			if( scale > 1 ) {
-				for( var i = 0; i < size.Width; i++ )
-					for( var j = 0; j < size.Height; j++ )
+				for( var i = 0; i < wSrc; i++ )
+					for( var j = 0; j < hSrc; j++ )
 						for( var k = 0; k < scale; k++ )
 							for( var l = 0; l < scale; l++ )
-								Draw( pos.X + (i * scale) + k, pos.Y + (j * scale) + l , sprite[i + src.X, j + src.Y] );
+								Draw( xDest + (i * scale) + k, yDest + (j * scale) + l, sprite[i + xSrc, j + ySrc] );
 			} else {
-				for( var i = 0; i < size.Width; i++ )
-					for( var j = 0; j < size.Height; j++ )
-						Draw( pos.X + i, pos.Y + j , sprite[i + src.X, j + src.Y] );
+				for( var i = 0; i < wSrc; i++ )
+					for( var j = 0; j < hSrc; j++ )
+						Draw( xDest + i, yDest + j, sprite[i + xSrc, j + ySrc] );
 			}
 		}
 
 		// Draws a single line of text
-		public void DrawString( Point pos, string sText, Pixel col, int scale = 1 ) {
-			throw new NotImplementedException();
-			int x = pos.X, y = pos.Y;
+		public virtual void DrawString( int x, int y, string sText, Pixel p, int scale = 1 ) {
+			// TODO: Load fontSprite from font file
 			var fontSprite = new Sprite();
 			var sx = 0;
 			var sy = 0;
 			var savedPM = PixelMode;
-			if( col.A != 255 ) PixelMode = PixelMode.Alpha;
-			else PixelMode = PixelMode.Mask;
+
+			if( p.A != 255 )
+				PixelMode = PixelMode.Alpha;
+			else
+				PixelMode = PixelMode.Mask;
 
 			foreach( var c in sText ) {
 				if( c == '\n' ) {
-					sx = 0; sy += (int)(8 * scale);
+					sx = 0; sy += 8 * scale;
 				} else {
 					var ox = (c - 32) % 16;
 					var oy = (c - 32) / 16;
@@ -418,14 +406,14 @@ namespace olc {
 								if( fontSprite[i + ox * 8, j + oy * 8].R > 0 )
 									for( var k = 0; k < scale; k++ )
 										for( var l = 0; l < scale; l++ )
-											Draw( x + sx + (i * scale) + k, y + sy + (j * scale) + l, col );
+											Draw( x + sx + (i * scale) + k, y + sy + (j * scale) + l, p );
 					} else {
 						for( var i = 0; i < 8; i++ )
 							for( var j = 0; j < 8; j++ )
 								if( fontSprite[i + ox * 8, j + oy * 8].R > 0 )
-									Draw( x + sx + i, y + sy + j, col );
+									Draw( x + sx + i, y + sy + j, p );
 					}
-					sx += (int)(8 * scale);
+					sx += 8 * scale;
 				}
 			}
 
@@ -435,7 +423,7 @@ namespace olc {
 		public virtual void Clear( Pixel p ) {
 			for( var x = 0; x < Width; x++ )
 				for( var y = 0; y < Height; y++ )
-					Draw(x, y, p );
+					Draw( x, y, p );
 		}
 	}
 }

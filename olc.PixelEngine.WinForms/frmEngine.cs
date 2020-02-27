@@ -22,6 +22,8 @@ namespace olc.PixelEngine.WinForms {
 		public frmEngine() {
 			InitializeComponent();
 
+			this.DoubleBuffered = false;
+
 			SetStyle( ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint, true );
 			UpdateStyles();
 
@@ -39,6 +41,7 @@ namespace olc.PixelEngine.WinForms {
 		}
 
 		public unsafe void SetPixels( Memory<Pixel> pixels ) {
+			// Assumes 32bpp ARGB mode
 			var memHandle = pixels.Pin();
 			_ = Windows.SetBitmapBits( mem_bmp, (uint)(pixels.Length * 4), (byte*)memHandle.Pointer );
 			memHandle.Dispose();
@@ -71,6 +74,7 @@ namespace olc.PixelEngine.WinForms {
 				needsSetModes = false;
 			}
 
+			// TODO: Figure out why StretchBlt flickers like crazy
 			if( PixelSize.Width == 1 && PixelSize.Height == 1 )
 				_ = Windows.BitBlt( myDc, 0, 0, Size.Width, Size.Height, mem_dc, 0, 0, Windows.TernaryRasterOperations.SRCCOPY );
 			else

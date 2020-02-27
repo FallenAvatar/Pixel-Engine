@@ -36,55 +36,11 @@ namespace olc.PixelEngine.WinForms {
 
 		public override float FPS {
 			set {
-				addNewFpsRecord( value );
 				if( window != null ) {
 					Invoke( () => {
 						window.Text = string.Format( "{0} - {1:#####0.00}fps", appName, value );
 					} );
 				}
-			}
-		}
-
-		private Queue<float> fpsRecords = new Queue<float>();
-		private int fpsUpdateCounter = 0;
-		private float fps_avg;
-		private float fps_var;
-		private float fps_stddev;
-		private float fps_min = float.MaxValue;
-		private float fps_max = float.MinValue;
-		private void addNewFpsRecord( float newFps ) {
-			return;
-			fpsRecords.Enqueue( newFps );
-
-			//fps_min = Math.Min( fps_min, newFps );
-			//fps_max = Math.Max( fps_max, newFps );
-			fps_min = fpsRecords.Min();
-			fps_max = fpsRecords.Max();
-
-			if( fpsRecords.Count < 20 )
-				return;
-
-			var oldFps = fpsRecords.Dequeue();
-			var oldAvg = fps_avg;
-
-			if( oldAvg == 0f ) {
-				oldAvg = fpsRecords.Average();
-			}
-
-			fps_avg = oldAvg + (newFps - oldFps) / fpsRecords.Count;
-			fps_var += (newFps - oldFps) * (newFps - fps_avg + oldFps - oldAvg) / (fpsRecords.Count - 1);
-			fps_stddev = (float)Math.Sqrt( Math.Abs( fps_var ) );
-
-			fpsUpdateCounter--;
-
-			if( fpsUpdateCounter <= 0 ) {
-				fpsUpdateCounter = 20;
-
-				if( float.IsNaN( fps_stddev ) )
-					System.Diagnostics.Debugger.Break();
-
-				// TODO; Display current vals
-				Console.WriteLine( "FPS: {0:0.00} min - {1:0.00} max - {2:0.00} avg - {3:0.00} std dev", fps_min, fps_max, fps_avg, fps_stddev );
 			}
 		}
 
