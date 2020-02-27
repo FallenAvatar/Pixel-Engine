@@ -10,8 +10,6 @@ namespace olc.PixelEngine.WinForms {
 		private frmEngine window;
 		private Thread uiThread;
 		public override bool Running { get; protected set; }
-		private Bitmap imgBackBuffer;
-		private System.Drawing.Imaging.BitmapData bd;
 
 		public Renderer() : base() { }
 
@@ -25,38 +23,76 @@ namespace olc.PixelEngine.WinForms {
 				if( window != null ) {
 					Invoke( () => {
 						window.Text = appName;
-					});
+					} );
 				}
 			}
 		}
 
 		public override float FPS {
 			set {
+				addNewFpsRecord( value );
 				if( window != null ) {
-					Invoke( () => { 
+					Invoke( () => {
 						window.Text = string.Format( "{0} - {1:#####0.00}fps", appName, value );
-					});
+					} );
 				}
 			}
 		}
 
-		public override bool ConstructWindow( int w, int h, int pixel_w, int pixel_h ) {
-			Running = true;
-			Width = w;
-			Height = h;
-			PixelSize = new Size( pixel_w, pixel_h );
-			imgBackBuffer = new Bitmap( w * pixel_w, h * pixel_h, System.Drawing.Imaging.PixelFormat.Format32bppArgb );
+		private Queue<float> fpsRecords = new Queue<float>();
+		private int fpsUpdateCounter = 0;
+		private float fps_avg;
+		private float fps_var;
+		private float fps_stddev;
+		private float fps_min = float.MaxValue;
+		private float fps_max = float.MinValue;
+		private void addNewFpsRecord( float newFps ) {
+			return;
+			fpsRecords.Enqueue( newFps );
 
+			//fps_min = Math.Min( fps_min, newFps );
+			//fps_max = Math.Max( fps_max, newFps );
+			fps_min = fpsRecords.Min();
+			fps_max = fpsRecords.Max();
+
+			if( fpsRecords.Count < 20 )
+				return;
+
+			var oldFps = fpsRecords.Dequeue();
+			var oldAvg = fps_avg;
+
+			if( oldAvg == 0f ) {
+				oldAvg = fpsRecords.Average();
+			}
+
+			fps_avg = oldAvg + (newFps - oldFps) / fpsRecords.Count;
+			fps_var += (newFps - oldFps) * (newFps - fps_avg + oldFps - oldAvg) / (fpsRecords.Count - 1);
+			fps_stddev = (float)Math.Sqrt( Math.Abs( fps_var ) );
+
+			fpsUpdateCounter--;
+
+			if( fpsUpdateCounter <= 0 ) {
+				fpsUpdateCounter = 20;
+
+				if( float.IsNaN( fps_stddev ) )
+					System.Diagnostics.Debugger.Break();
+
+				// TODO; Display current vals
+				Console.WriteLine( "FPS: {0:0.00} min - {1:0.00} max - {2:0.00} avg - {3:0.00} std dev", fps_min, fps_max, fps_avg, fps_stddev );
+			}
+		}
+
+		protected override bool PlatformConstructWindow() {
 			var loading = new ManualResetEvent( false );
 			uiThread = new Thread( () => {
 				window = new frmEngine();
 				window.Load += ( obj, e ) => {
+					window.Size = new Size( RenderTarget.Width, RenderTarget.Height );
 					_ = loading.Set();
 				};
 				window.FormClosing += ( obj, e ) => {
 					Running = false;
 				};
-				window.ClientSize = new Size( w*pixel_w, h*pixel_h );
 
 				if( !string.IsNullOrWhiteSpace( appName ) )
 					window.Text = appName;
@@ -71,32 +107,19 @@ namespace olc.PixelEngine.WinForms {
 			return true;
 		}
 
-		public unsafe override void Draw(Point pos, Pixel p) {
-			var s = bd.Stride / 4;
-			//var pixSize = 4;
-			int* pStart = (int*)bd.Scan0.ToPointer();
-			var pixVal = p.ToArgb();
-
-			var sx = pos.X * PixelSize.Width;
-			var sy = pos.Y * PixelSize.Height;
-
-			for( var x = sx; x < sx + PixelSize.Width; x++ )
-				for( var y = sy; y < sy + PixelSize.Height; y++ )
-					*(pStart + (y * s) + (x)) = pixVal;
+		protected override void DrawRaw( int x, int y, Pixel p ) {
+			RenderTarget[x, y] = p;
 		}
 
 		public override void StartFrame() {
-			bd = imgBackBuffer.LockBits( new Rectangle( 0, 0, Width * PixelSize.Width, Height * PixelSize.Height ), System.Drawing.Imaging.ImageLockMode.ReadWrite, System.Drawing.Imaging.PixelFormat.Format32bppArgb );
+			if( window.NeedsNewGraphics )
+				Invoke( () => { window.CreateGraphics(); } );
 		}
 
 		public override void UpdateScreen() {
-			imgBackBuffer.UnlockBits( bd );
-			try {
-				window.BufferedGraphics.DrawImageUnscaled( imgBackBuffer, 0, 0 );
-			} catch( Exception _ ) { }
+			window.SetPixels( RenderTarget.Pixels );
 
 			Invoke( () => {
-				
 				window.Refresh();
 			} );
 		}

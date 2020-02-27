@@ -9,11 +9,12 @@ namespace olc {
 		Alpha,
 		Custom
 	}
-	public class Pixel : IEquatable<Pixel> {
-		public byte A;
-		public byte R;
-		public byte G;
-		public byte B;
+	[StructLayout(LayoutKind.Explicit, Size = 4)]
+	public struct Pixel : IEquatable<Pixel> {
+		[FieldOffset( 3 )] public byte A;
+		[FieldOffset( 2 )] public byte R;
+		[FieldOffset( 1 )] public byte G;
+		[FieldOffset( 0 )] public byte B;
 
 		/*public uint Value {
 			get { return (uint)((A << 24) | (B << 16) | (G << 8) | (R << 0)); }
@@ -27,12 +28,12 @@ namespace olc {
 			}
 		}*/
 
-		public Pixel() {
+		/*public Pixel() {
 			A = 255;
 			R = 0;
 			G = 0;
 			B = 0;
-		}
+		}*/
 
 		/*public Pixel(uint val) {
 			Value = val;

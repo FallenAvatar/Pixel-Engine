@@ -11,7 +11,10 @@ namespace olc {
 
 	public abstract class PixelGameEngine {
 		public bool IsFocused { get; set; }
-		public string AppName { get; set; }
+		public string AppName {
+			get { return Renderer.AppName; }
+			set { Renderer.AppName = value; }
+		}
 		protected IRenderer Renderer;
 
 		public virtual Pixel DefaultBGPixel { get { return Pixel.Black; } }
@@ -40,12 +43,14 @@ namespace olc {
 			var sw = new System.Diagnostics.Stopwatch();
 			var running = true;
 			var lastFrameTime = DateTime.Now;
+			DateTime currFrameTime;
+			float frameDT;
 
 			while( running ) {
 				sw.Restart();
 
-				var currFrameTime = DateTime.Now;
-				var frameDT = (float)(currFrameTime - lastFrameTime).TotalSeconds;
+				currFrameTime = DateTime.Now;
+				frameDT = (float)(currFrameTime - lastFrameTime).TotalSeconds;
 				Renderer.StartFrame();
 
 				running = OnUserUpdate( frameDT ) && Renderer.Running;
@@ -91,74 +96,74 @@ namespace olc {
 		//public void SetSubPixelOffset( float ox, float oy ) { }
 
 		// Draws a single Pixel
-		public void Draw( int x, int y, Pixel p = null ) {
-			Draw( new Point( x, y ), p );
-		}
-		public void Draw( Point pos, Pixel p = null ) {
+		public void Draw( int x, int y, Pixel? p = null ) {
 			p = p ?? DefaultFGPixel;
-			Renderer.Draw( pos, p );
+			Renderer.Draw( x,y, p.Value );
+		}
+		public void Draw( Point pos, Pixel? p = null ) {
+			Draw( pos.X,pos.Y, p.Value );
 		}
 		// Draws a line from (x1,y1) to (x2,y2)
-		public void DrawLine( int x1, int y1, int x2, int y2, Pixel p = null, uint pattern = 0xFFFFFFFF ) {
+		public void DrawLine( int x1, int y1, int x2, int y2, Pixel? p = null, uint pattern = 0xFFFFFFFF ) {
 			DrawLine( new Point( x1, y1 ), new Point( x2, y2 ), p, pattern );
 		}
-		public void DrawLine( Point pos1, Point pos2, Pixel p = null, uint pattern = 0xFFFFFFFF ) {
+		public void DrawLine( Point pos1, Point pos2, Pixel? p = null, uint pattern = 0xFFFFFFFF ) {
 			p = p ?? DefaultFGPixel;
-			Renderer.DrawLine( pos1, pos2, p, pattern );
+			Renderer.DrawLine( pos1, pos2, p.Value, pattern );
 		}
 		// Draws a circle located at (x,y) with radius
-		public void DrawCircle( int x, int y, int radius, Pixel p = null, byte mask = 0xFF ) {
+		public void DrawCircle( int x, int y, int radius, Pixel? p = null, byte mask = 0xFF ) {
 			DrawCircle( new Point( x, y ), radius, p, mask );
 		}
-		public void DrawCircle( Point pos, int radius, Pixel p = null, byte mask = 0xFF ) {
+		public void DrawCircle( Point pos, int radius, Pixel? p = null, byte mask = 0xFF ) {
 			p = p ?? DefaultFGPixel;
-			Renderer.DrawCircle( pos, radius, p, mask );
+			Renderer.DrawCircle( pos, radius, p.Value, mask );
 		}
 		// Fills a circle located at (x,y) with radius
-		public void FillCircle( int x, int y, int radius, Pixel p = null ) {
+		public void FillCircle( int x, int y, int radius, Pixel? p = null ) {
 			FillCircle( new Point( x, y ), radius, p );
 		}
-		public void FillCircle( Point pos, int radius, Pixel p = null ) {
+		public void FillCircle( Point pos, int radius, Pixel? p = null ) {
 			p = p ?? DefaultFGPixel;
-			Renderer.FillCircle( pos, radius, p );
+			Renderer.FillCircle( pos, radius, p.Value );
 		}
 		// Draws a rectangle at (x,y) to (x+w,y+h)
-		public void DrawRect( int x, int y, int w, int h, Pixel p = null ) {
+		public void DrawRect( int x, int y, int w, int h, Pixel? p = null ) {
 			DrawRect( new Rectangle( x, y, w, h ), p );
 		}
-		public void DrawRect( Point pos, Size size, Pixel p = null ) {
+		public void DrawRect( Point pos, Size size, Pixel? p = null ) {
 			DrawRect( new Rectangle( pos, size ), p );
 		}
-		public void DrawRect( Rectangle rect, Pixel p = null ) {
+		public void DrawRect( Rectangle rect, Pixel? p = null ) {
 			p = p ?? DefaultFGPixel;
-			Renderer.DrawRect( rect, p );
+			Renderer.DrawRect( rect, p.Value );
 		}
 		// Fills a rectangle at (x,y) to (x+w,y+h)
-		public void FillRect( int x, int y, int w, int h, Pixel p = null ) {
+		public void FillRect( int x, int y, int w, int h, Pixel? p = null ) {
 			FillRect( new Rectangle( x, y, w, h ), p );
 		}
-		public void FillRect( Point pos, Size size, Pixel p = null ) {
+		public void FillRect( Point pos, Size size, Pixel? p = null ) {
 			FillRect( new Rectangle( pos, size ), p );
 		}
-		public void FillRect( Rectangle rect, Pixel p = null ) {
+		public void FillRect( Rectangle rect, Pixel? p = null ) {
 			p = p ?? DefaultFGPixel;
-			Renderer.FillRect( rect, p );
+			Renderer.FillRect( rect, p.Value );
 		}
 		// Draws a triangle between points (x1,y1), (x2,y2) and (x3,y3)
-		public void DrawTriangle( int x1, int y1, int x2, int y2, int x3, int y3, Pixel p = null ) {
+		public void DrawTriangle( int x1, int y1, int x2, int y2, int x3, int y3, Pixel? p = null ) {
 			DrawTriangle( new Point( x1, y1 ), new Point( x2, y2 ), new Point( x3, y3 ), p );
 		}
-		public void DrawTriangle( Point pos1, Point pos2, Point pos3, Pixel p = null ) {
+		public void DrawTriangle( Point pos1, Point pos2, Point pos3, Pixel? p = null ) {
 			p = p ?? DefaultFGPixel;
-			Renderer.DrawTriangle( pos1, pos2, pos3, p );
+			Renderer.DrawTriangle( pos1, pos2, pos3, p.Value );
 		}
 		// Flat fills a triangle between points (x1,y1), (x2,y2) and (x3,y3)
-		public void FillTriangle( int x1, int y1, int x2, int y2, int x3, int y3, Pixel p = null ) {
+		public void FillTriangle( int x1, int y1, int x2, int y2, int x3, int y3, Pixel? p = null ) {
 			FillTriangle( new Point( x1, y1 ), new Point( x2, y2 ), new Point( x3, y3 ), p );
 		}
-		public void FillTriangle( Point pos1, Point pos2, Point pos3, Pixel p = null ) {
+		public void FillTriangle( Point pos1, Point pos2, Point pos3, Pixel? p = null ) {
 			p = p ?? DefaultFGPixel;
-			Renderer.FillTriangle( pos1, pos2, pos3, p );
+			Renderer.FillTriangle( pos1, pos2, pos3, p.Value );
 		}
 		// Draws an entire sprite at location (x,y)
 		public void DrawSprite( int x, int y, Sprite sprite, int scale = 1 ) {
@@ -176,17 +181,17 @@ namespace olc {
 			Renderer.DrawPartialSprite( pos, sprite, sourcepos, size, scale );
 		}
 		// Draws a single line of text
-		public void DrawString( int x, int y, string sText, Pixel col = null, int scale = 1 ) {
+		public void DrawString( int x, int y, string sText, Pixel? col = null, int scale = 1 ) {
 			DrawString( new Point( x, y ), sText, col, scale );
 		}
-		public void DrawString( Point pos, string sText, Pixel col = null, int scale = 1 ) {
+		public void DrawString( Point pos, string sText, Pixel? col = null, int scale = 1 ) {
 			col = col ?? DefaultFGPixel;
-			Renderer.DrawString( pos, sText, col, scale );
+			Renderer.DrawString( pos, sText, col.Value, scale );
 		}
 		// Clears entire draw target to Pixel
-		public void Clear( Pixel p = null ) {
+		public void Clear( Pixel? p = null ) {
 			p = p ?? DefaultBGPixel;
-			Renderer.Clear( p );
+			Renderer.Clear( p.Value );
 		}
 		// Resize the primary screen sprite
 		public void SetScreenSize( int w, int h ) { }

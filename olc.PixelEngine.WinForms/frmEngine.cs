@@ -11,41 +11,34 @@ using System.Windows.Forms;
 
 namespace olc.PixelEngine.WinForms {
 	public partial class frmEngine : Form {
-		private BufferedGraphics buffGraphics;
-		public Graphics BufferedGraphics {
-			get {
-				if( buffGraphics == null )
-					return null;
+		public bool NeedsNewGraphics { get; protected set; }
 
-				return buffGraphics.Graphics;
-			}
-		}
+		private IntPtr myDc;
+		private IntPtr mem_dc;
+		private IntPtr mem_bmp;
 
 		public frmEngine() {
 			InitializeComponent();
 
-			SetStyle( ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint, true );
+			SetStyle( ControlStyles.UserPaint, true );
 			UpdateStyles();
 
-			CreateBufferedGraphics();
+			NeedsNewGraphics = true;
 		}
 
-		private void CreateBufferedGraphics() {
-			if( buffGraphics != null ) {
-				buffGraphics.Dispose();
-				buffGraphics = null;
-			}
+		public void CreateGraphics() {
+			myDc = Windows.GetDC( Handle );
+			mem_dc = Windows.CreateCompatibleDC( myDc );
+			mem_bmp = Windows.CreateCompatibleBitmap( myDc, Size.Width, Size.Height );
+			_ = Windows.SelectObject( mem_dc, mem_bmp );
 
-			BufferedGraphicsManager.Current.MaximumBuffer = Size + new Size( 1, 1 );
-			buffGraphics = BufferedGraphicsManager.Current.Allocate( CreateGraphics(), DisplayRectangle );
+			NeedsNewGraphics = false;
+		}
 
-			buffGraphics.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.None;
-			buffGraphics.Graphics.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
-			buffGraphics.Graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighSpeed;
-			buffGraphics.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
-			buffGraphics.Graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.None;
-
-			buffGraphics.Graphics.Clear( Color.Black );
+		public unsafe void SetPixels(Memory<Pixel> pixels) {
+			var memHandle = pixels.Pin();
+			_ = Windows.SetBitmapBits( mem_bmp, (uint)(pixels.Length * 4), (byte*)memHandle.Pointer );
+			memHandle.Dispose();
 		}
 
 		/// <summary> 
@@ -55,23 +48,21 @@ namespace olc.PixelEngine.WinForms {
 		protected override void Dispose( bool disposing ) {
 			if( disposing && (components != null) ) {
 				components.Dispose();
-				if( buffGraphics != null ) {
-					buffGraphics.Dispose();
-					buffGraphics = null;
-				}
+				// TODO: Clean up HDCs and what not
 			}
 
 			base.Dispose( disposing );
 		}
 
 		private void frmEngine_Paint( object sender, PaintEventArgs e ) {
-			try {
-				buffGraphics.Render( e.Graphics );
-			} catch( Exception _ ) { }
+			if( NeedsNewGraphics )
+				return;
+
+			_ = Windows.BitBlt( myDc, 0, 0, Size.Width, Size.Height, mem_dc, 0, 0, Windows.TernaryRasterOperations.SRCCOPY );
 		}
 
 		private void frmEngine_ResizeEnd( object sender, EventArgs e ) {
-			CreateBufferedGraphics();
+			NeedsNewGraphics = true;
 		}
 
 		private void frmEngine_KeyDown( object sender, KeyEventArgs e ) {
@@ -79,7 +70,7 @@ namespace olc.PixelEngine.WinForms {
 		}
 
 		private void frmEngine_KeyUp( object sender, KeyEventArgs e ) {
-			//var k = e.KeyCode;
+			var k = e.KeyCode;
 		}
 
 		private void frmEngine_MouseDown( object sender, MouseEventArgs e ) {

@@ -17,7 +17,7 @@ namespace olc {
 			Bitmap retImg;
 			try {
 				retImg = Image.FromFile( sImageFile ) as Bitmap;
-			} catch( Exception _ ) {
+			} catch( Exception ) {
 				retImg = null;
 			}
 
@@ -37,7 +37,7 @@ namespace olc {
 			Bitmap retImg;
 			try {
 				retImg = Image.FromStream( sImageFile ) as Bitmap;
-			} catch( Exception _ ) {
+			} catch( Exception ) {
 				retImg = null;
 			}
 
@@ -51,42 +51,43 @@ namespace olc {
 
 		public int Width { get; protected set; }
 		public int Height { get; protected set; }
-		public Pixel[,] Pixels { get; protected set; }
+		//public Pixel[,] Pixels { get; set; }
+		public Memory<Pixel> Pixels { get; protected set; }
 		public SpriteMode Mode { get; protected set; }
 
 		public Pixel this[int x, int y] {
-			get { return Pixels[x, y]; }
-			set { Pixels[x, y] = value; }
+			get { return Pixels.Span[(y * Width) + x]; }
+			set { Pixels.Span[(y * Width) + x] = value; }
 		}
 
 		public Pixel this[Point p] {
-			get { return Pixels[p.X, p.Y]; }
-			set { Pixels[p.X, p.Y] = value; }
+			get { return this[p.X, p.Y]; }
+			set { this[p.X, p.Y] = value; }
 		}
 
 		public Sprite() {
 			Width = 0; Height = 0;
-			Pixels = new Pixel[0, 0];
+			Pixels = new Memory<Pixel>();
 			Mode = SpriteMode.Normal;
 		}
 
 		public Sprite( int w, int h ) {
 			Width = w;
 			Height = h;
-			Pixels = new Pixel[w, h];
+			Pixels = new Memory<Pixel>(new Pixel[w * h]);
 			Mode = SpriteMode.Normal;
 		}
 
 		public Sprite( Bitmap img ) {
 			Width = img.Width;
 			Height = img.Height;
-			Pixels = new Pixel[Width, Height];
+			Pixels = new Memory<Pixel>( new Pixel[Width * Height] );
 			Mode = SpriteMode.Normal;
 
 			for( var x = 0; x < img.Width; x++ ) {
 				for( var y = 0; y < img.Width; y++ ) {
 					var c = img.GetPixel( x, y );
-					Pixels[x, y] = Pixel.FromColor(c);
+					this[x, y] = Pixel.FromColor(c);
 				}
 			}
 		}
@@ -96,15 +97,15 @@ namespace olc {
 		}
 
 		public Pixel GetPixel( int x, int y ) {
-			return Pixels[x, y];
+			return this[x, y];
 		}
 
 		public void SetPixel( int x, int y, Pixel p ) {
-			Pixels[x, y] = p;
+			this[x, y] = p;
 		}
 
 		public Pixel Sample( float x, float y ) {
-			return Pixels[(int)Math.Min( Width - 1, x * Width ), (int)Math.Min( Height - 1, y * Height )];
+			return this[(int)Math.Min( Width - 1, x * Width ), (int)Math.Min( Height - 1, y * Height )];
 		}
 
 		public Pixel SampleBL( float u, float v ) {
@@ -128,6 +129,6 @@ namespace olc {
 				(byte)((p1.B * u_opposite + p2.B * u_ratio) * v_opposite + (p3.B * u_opposite + p4.B * u_ratio) * v_ratio) );
 		}
 
-		public Pixel[,] GetData() { return Pixels; }
+		public Pixel[] GetData() { return Pixels.ToArray(); }
 	}
 }

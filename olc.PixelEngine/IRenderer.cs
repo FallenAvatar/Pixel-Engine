@@ -11,12 +11,13 @@ namespace olc {
 		bool Running { get; }
 		PixelMode PixelMode { get; set; }
 		Size PixelSize { get; }
+		Sprite RenderTarget { get; set; }
 
-		bool ConstructWindow( int w, int h, int pixel_w, int pixel_h );
+		bool ConstructWindow( int screen_w, int screen_h, int pixel_w, int pixel_h );
 
 		void Clear( Pixel p );
 
-		void Draw( Point pos, Pixel p );
+		void Draw( int x, int y, Pixel p );
 
 		// Draws a line from (x1,y1) to (x2,y2)
 		void DrawLine( Point pos1, Point pos2, Pixel p, uint pattern = 0xFFFFFFFF );
@@ -47,7 +48,7 @@ namespace olc {
 		void DrawPartialSprite( Point pos, Sprite sprite, Point sourcepos, Size size, int scale = 1 );
 
 		// Draws a single line of text
-		void DrawString( Point pos, string sText, Pixel col = null, int scale = 1 );
+		void DrawString( Point pos, string sText, Pixel col, int scale = 1 );
 
 		void StartFrame();
 		void UpdateScreen();

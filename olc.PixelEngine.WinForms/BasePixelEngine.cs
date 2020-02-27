@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 
 namespace olc.PixelEngine.WinForms {
 	public abstract class BasePixelEngine : olc.PixelGameEngine, IDisposable {
-		protected BasePixelEngine() : base( new Renderer() ) { }
+		protected BasePixelEngine(string[] args) : base( new Renderer() ) {
+			// TODO: Parse args
+		}
 
 		public void Dispose() {
 			_ = OnUserDestroy();
