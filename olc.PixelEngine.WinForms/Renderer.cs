@@ -50,7 +50,7 @@ namespace olc.PixelEngine.WinForms {
 				window = new frmEngine();
 				window.PixelSize = PixelSize;
 				window.Load += ( obj, e ) => {
-					window.Size = new Size( Width * PixelSize.Width, Height * PixelSize.Height );
+					window.ClientSize = new Size( Width * PixelSize.Width, Height * PixelSize.Height );
 					_ = loading.Set();
 				};
 				window.FormClosing += ( obj, e ) => {
@@ -70,16 +70,18 @@ namespace olc.PixelEngine.WinForms {
 			return true;
 		}
 
-		public override void StartFrame() {
+		public override void PlatformStartFrame() {
 			if( window.NeedsNewGraphics )
-				Invoke( () => { window.CreateGraphics(); } );
+				Invoke( () => { window.CreateNewGraphics(); } );
 		}
 
-		public override void UpdateScreen() {
-			Invoke( () => {
-				window.SetPixels( RenderTarget.Pixels );
+		public override void PlatformUpdateScreen() {
+			window.SetPixels(FrameBuffer.Pixels);
 
-				window.Refresh();
+			Invoke( () => {
+				
+
+				window.Invalidate();
 			} );
 		}
 

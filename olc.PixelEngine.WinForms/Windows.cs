@@ -7,17 +7,17 @@ using System.Runtime.InteropServices;
 
 namespace olc.PixelEngine.WinForms {
 	static class Windows {
-		[DllImport( "user32.dll", SetLastError = true )]
-		internal static extern IntPtr GetDC( [In] IntPtr hWnd );
+		[DllImport("user32.dll", SetLastError = true)]
+		internal static extern IntPtr GetDC([In] IntPtr hWnd);
 
-		[DllImport( "gdi32.dll" )]
-		internal static extern uint SetPixel( IntPtr hdc, int X, int Y, uint crColor );
+		[DllImport("gdi32.dll")]
+		internal static extern uint SetPixel(IntPtr hdc, int X, int Y, uint crColor);
 
-		[DllImport( "gdi32.dll" )]
-		internal static extern uint GetPixel( IntPtr hdc, int nXPos, int nYPos );
+		[DllImport("gdi32.dll")]
+		internal static extern uint GetPixel(IntPtr hdc, int nXPos, int nYPos);
 
-		[DllImport( "gdi32.dll" )]
-		internal static unsafe extern int SetBitmapBits( IntPtr hbmp, uint cBytes, byte* lpBits );
+		[DllImport("gdi32.dll")]
+		internal static unsafe extern int SetBitmapBits(IntPtr hbmp, uint cBytes, byte* lpBits);
 
 		/// <summary>
 		///        Creates a memory device context (DC) compatible with the specified device.
@@ -28,8 +28,8 @@ namespace olc.PixelEngine.WinForms {
 		///        If the function succeeds, the return value is the handle to a memory DC.
 		///        If the function fails, the return value is <see cref="System.IntPtr.Zero"/>.
 		/// </returns>
-		[DllImport( "gdi32.dll", EntryPoint = "CreateCompatibleDC", SetLastError = true )]
-		internal static extern IntPtr CreateCompatibleDC( [In] IntPtr hdc );
+		[DllImport("gdi32.dll", EntryPoint = "CreateCompatibleDC", SetLastError = true)]
+		internal static extern IntPtr CreateCompatibleDC([In] IntPtr hdc);
 
 		/// <summary>
 		///        Creates a bitmap compatible with the device that is associated with the specified device context.
@@ -38,15 +38,15 @@ namespace olc.PixelEngine.WinForms {
 		/// <param name="nWidth">The bitmap width, in pixels.</param>
 		/// <param name="nHeight">The bitmap height, in pixels.</param>
 		/// <returns>If the function succeeds, the return value is a handle to the compatible bitmap (DDB). If the function fails, the return value is <see cref="System.IntPtr.Zero"/>.</returns>
-		[DllImport( "gdi32.dll", EntryPoint = "CreateCompatibleBitmap" )]
-		internal static extern IntPtr CreateCompatibleBitmap( [In] IntPtr hdc, int nWidth, int nHeight );
+		[DllImport("gdi32.dll", EntryPoint = "CreateCompatibleBitmap")]
+		internal static extern IntPtr CreateCompatibleBitmap([In] IntPtr hdc, int nWidth, int nHeight);
 
 		/// <summary>Deletes the specified device context (DC).</summary>
 		/// <param name="hdc">A handle to the device context.</param>
 		/// <returns><para>If the function succeeds, the return value is nonzero.</para><para>If the function fails, the return value is zero.</para></returns>
 		/// <remarks>An application must not delete a DC whose handle was obtained by calling the <c>GetDC</c> function. Instead, it must call the <c>ReleaseDC</c> function to free the DC.</remarks>
-		[DllImport( "gdi32.dll", EntryPoint = "DeleteDC" )]
-		internal static extern bool DeleteDC( [In] IntPtr hdc );
+		[DllImport("gdi32.dll", EntryPoint = "DeleteDC")]
+		internal static extern bool DeleteDC([In] IntPtr hdc);
 
 		/// <summary>Deletes a logical pen, brush, font, bitmap, region, or palette, freeing all system resources associated with the object. After the object is deleted, the specified handle is no longer valid.</summary>
 		/// <param name="hObject">A handle to a logical pen, brush, font, bitmap, region, or palette.</param>
@@ -58,9 +58,9 @@ namespace olc.PixelEngine.WinForms {
 		///   <para>Do not delete a drawing object (pen or brush) while it is still selected into a DC.</para>
 		///   <para>When a pattern brush is deleted, the bitmap associated with the brush is not deleted. The bitmap must be deleted independently.</para>
 		/// </remarks>
-		[DllImport( "gdi32.dll", EntryPoint = "DeleteObject" )]
-		[return: MarshalAs( UnmanagedType.Bool )]
-		internal static extern bool DeleteObject( [In] IntPtr hObject );
+		[DllImport("gdi32.dll", EntryPoint = "DeleteObject")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static extern bool DeleteObject([In] IntPtr hObject);
 
 		/// <summary>Selects an object into the specified device context (DC). The new object replaces the previous object of the same type.</summary>
 		/// <param name="hdc">A handle to the DC.</param>
@@ -77,8 +77,8 @@ namespace olc.PixelEngine.WinForms {
 		///   <para>An application cannot select a single bitmap into more than one DC at a time.</para>
 		///   <para>ICM: If the object being selected is a brush or a pen, color management is performed.</para>
 		/// </remarks>
-		[DllImport( "gdi32.dll", EntryPoint = "SelectObject" )]
-		internal static extern IntPtr SelectObject( [In] IntPtr hdc, [In] IntPtr hgdiobj );
+		[DllImport("gdi32.dll", EntryPoint = "SelectObject")]
+		internal static extern IntPtr SelectObject([In] IntPtr hdc, [In] IntPtr hgdiobj);
 
 		/// <summary>
 		///    Performs a bit-block transfer of the color data corresponding to a
@@ -97,9 +97,9 @@ namespace olc.PixelEngine.WinForms {
 		/// <returns>
 		///    <c>true</c> if the operation succeedes, <c>false</c> otherwise. To get extended error information, call <see cref="System.Runtime.InteropServices.Marshal.GetLastWin32Error"/>.
 		/// </returns>
-		[DllImport( "gdi32.dll", EntryPoint = "BitBlt", SetLastError = true )]
-		[return: MarshalAs( UnmanagedType.Bool )]
-		internal static extern bool BitBlt( [In] IntPtr hdc, int nXDest, int nYDest, int nWidth, int nHeight, [In] IntPtr hdcSrc, int nXSrc, int nYSrc, TernaryRasterOperations dwRop );
+		[DllImport("gdi32.dll", EntryPoint = "BitBlt", SetLastError = true)]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static extern bool BitBlt([In] IntPtr hdc, int nXDest, int nYDest, int nWidth, int nHeight, [In] IntPtr hdcSrc, int nXSrc, int nYSrc, TernaryRasterOperations dwRop);
 
 		/// <summary>
 		///     Specifies a raster-operation code. These codes define how the color data for the
@@ -144,8 +144,8 @@ namespace olc.PixelEngine.WinForms {
 			CAPTUREBLT = 0x40000000
 		}
 
-		[DllImport( "gdi32.dll", EntryPoint = "StretchBlt", SetLastError = true )]
-		[return: MarshalAs( UnmanagedType.Bool )]
-		internal static extern bool StretchBlt( [In] IntPtr hdc, int xDest, int yDest, int wDest, int hDest, [In] IntPtr hdcSrc, int xSrc, int ySrc, int wSrc, int hSrc, TernaryRasterOperations dwRop );
+		[DllImport("gdi32.dll", EntryPoint = "StretchBlt", SetLastError = true)]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static extern bool StretchBlt([In] IntPtr hdc, int xDest, int yDest, int wDest, int hDest, [In] IntPtr hdcSrc, int xSrc, int ySrc, int wSrc, int hSrc, TernaryRasterOperations dwRop);
 	}
 }

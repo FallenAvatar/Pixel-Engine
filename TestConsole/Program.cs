@@ -7,7 +7,9 @@ using System.Threading.Tasks;
 namespace TestConsole {
 	class Program {
 		static void Main( string[] args ) {
-			RunDemo_Maze( args );
+			//RunDemo_RandomPixels( args );
+			RunDemo_Maze(args);
+			//RunDemo_Simple3D(args);
 		}
 
 		private static void RunDemo_RandomPixels( string[] args ) {

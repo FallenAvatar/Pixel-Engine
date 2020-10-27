@@ -11,7 +11,8 @@ namespace olc {
 		bool Running { get; }
 		PixelMode PixelMode { get; set; }
 		Size PixelSize { get; }
-		Sprite RenderTarget { get; set; }
+		Sprite RenderTarget { get; }
+		Sprite FrameBuffer { get; }
 
 		bool ConstructWindow( int screen_w, int screen_h, int pixel_w, int pixel_h );
 

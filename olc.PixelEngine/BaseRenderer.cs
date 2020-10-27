@@ -1,9 +1,19 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Threading;
 
 namespace olc {
 	public abstract class BaseRenderer : IRenderer {
+		protected enum ScreenBufferStatus : byte {
+			Invalid = 0,
+			Ready = 1,
+			Painting,
+			Painted,
+			Rendering,
+			Rendered
+		}
 		public int Width { get { return RenderTarget.Width; } }
 		public int Height { get { return RenderTarget.Height; } }
 
@@ -13,20 +23,47 @@ namespace olc {
 		public PixelMode PixelMode { get; set; }
 		public virtual Size PixelSize { get; protected set; }
 
-		public Sprite RenderTarget { get; set; }
+		//protected Queue<Sprite> spareBuffers;
+		protected Sprite nextFrameBuffer;
+		protected Sprite frameBuffer;
+		public Sprite RenderTarget { get { return frameBuffer; } }
+		public Sprite FrameBuffer { get { return frameBuffer; } }
 
 		protected BaseRenderer() { }
 
 		public virtual bool ConstructWindow( int screen_w, int screen_h, int pixel_w, int pixel_h ) {
 			PixelSize = new Size( pixel_w, pixel_h );
-			RenderTarget = new Sprite( screen_w, screen_h );
+
+			//spareBuffers = new Queue<Sprite>();
+			//for( var i=0; i<3; i++ ) {
+			//	spareBuffers.Enqueue(new Sprite(screen_w, screen_h));
+			//}
+
+			//frameBuffer = spareBuffers.Dequeue();
+			//nextFrameBuffer = spareBuffers.Dequeue();
+
+			frameBuffer = new Sprite(screen_w, screen_h);
+			nextFrameBuffer = new Sprite(screen_w, screen_h);
 
 			return Running = PlatformConstructWindow();
 		}
 
+		public void StartFrame() {
+			PlatformStartFrame();
+		}
+		public void UpdateScreen() {
+
+			//nextFrameBuffer = Interlocked.Exchange(ref frameBuffer, nextFrameBuffer);
+			
+
+			PlatformUpdateScreen();
+
+			//spareBuffers.Enqueue(frameBuffer);
+		}
+
 		protected abstract bool PlatformConstructWindow();
-		public abstract void StartFrame();
-		public abstract void UpdateScreen();
+		public abstract void PlatformStartFrame();
+		public abstract void PlatformUpdateScreen();
 
 		public virtual void Draw( int x, int y, Pixel p ) {
 			RenderTarget[x, y] = p;
